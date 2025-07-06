@@ -7,15 +7,15 @@
 
     Functions:
 
-        connect_db()
+        def connect_db()
 
-        create_database()
+        def create_database()
 
-        connect_to_prodev()
+        def connect_to_prodev()
 
-        create_table()
+        def create_table()
 
-        insert_data(connection, file_path)
+        def insert_data(connection, file_path)
 
 1. 🔄 Stream Users One by One
 
@@ -24,8 +24,8 @@
     Goal: Use a generator to yield users one by one from the database.
 
     Function:
-
-    def stream_users()
+    
+        def stream_users()
 
 2. 📦 Batch Processing Large Data
 
@@ -35,8 +35,8 @@
 
     Functions:
 
-    def stream_users_in_batches(batch_size)
-    def batch_processing(batch_size)
+        def stream_users_in_batches(batch_size)
+        def batch_processing(batch_size)
 
 3. ⏩ Lazy Pagination
 
@@ -46,8 +46,8 @@
 
     Functions:
 
-    def paginate_users(page_size, offset)
-    def lazy_pagination(page_size)
+        def paginate_users(page_size, offset)
+        def lazy_pagination(page_size)
 
 4. 📊 Average Age with Generator
 
@@ -57,8 +57,8 @@
 
     Functions:
 
-    def stream_user_ages()
-    def calculate_average_age()
+        def stream_user_ages()
+        def calculate_average_age()
 
 📁 Data Source
 
@@ -70,15 +70,15 @@
 
     ✅ Install dependencies:
 
-pip install mysql-connector-python
+    pip install mysql-connector-python
 
 ✅ Seed the database:
 
-python seed.py
+    python seed.py
 
 ✅ Run tasks individually:
 
-python 0-stream_users.py
-python 1-batch_processing.py
-python 2-lazy_paginate.py
-python 4-stream_ages.py
+    python 0-stream_users.py
+    python 1-batch_processing.py
+    python 2-lazy_paginate.py
+    python 4-stream_ages.py
