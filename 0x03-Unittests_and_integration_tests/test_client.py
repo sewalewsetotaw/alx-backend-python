@@ -6,7 +6,7 @@ from unittest import TestCase
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, Mock, PropertyMock
 from client import GithubOrgClient
-from fixtures import org_payload, repos_payload, expected_repos, apache2_repos
+from fixtures import TEST_PAYLOAD
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -78,14 +78,7 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-@parameterized_class([
-    {
-        "org_payload": org_payload,
-        "repos_payload": repos_payload,
-        "expected_repos": expected_repos,
-        "apache2_repos": apache2_repos,
-    }
-])
+@parameterized_class(TEST_PAYLOAD)
 class TestIntegrationGithubOrgClient(TestCase):
     """Integration test for GithubOrgClient.public_repos"""
 
@@ -97,7 +90,7 @@ class TestIntegrationGithubOrgClient(TestCase):
 
         def side_effect(url):
             mock_response = Mock()
-            if url == GithubOrgClient.ORG_URL.format(org="testorg"):
+            if url == GithubOrgClient.ORG_URL.format(org="google"):
                 mock_response.json.return_value = cls.org_payload
             elif url == cls.org_payload["repos_url"]:
                 mock_response.json.return_value = cls.repos_payload
@@ -112,11 +105,11 @@ class TestIntegrationGithubOrgClient(TestCase):
 
     def test_public_repos(self):
         """Test public_repos returns expected repo names"""
-        client = GithubOrgClient("testorg")
+        client = GithubOrgClient("google")
         self.assertEqual(client.public_repos(), self.expected_repos)
 
     def test_public_repos_with_license(self):
         """Test public_repos with license filter"""
-        client = GithubOrgClient("testorg")
+        client = GithubOrgClient("google")
         self.assertEqual(client.public_repos(license="apache-2.0"),
                          self.apache2_repos)
