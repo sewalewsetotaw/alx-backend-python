@@ -2,13 +2,13 @@
 """Unit tests for GithubOrgClient class in client.py"""
 
 import unittest
-from typing import Dict
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
-from parameterized import parameterized, parameterized_class
-from requests import HTTPError
-
-from client import GithubOrgClient
+from parameterized import parameterized
+from parameterized import parameterized_class
+from unittest.mock import patch, PropertyMock,Mock
 from fixtures import TEST_PAYLOAD
+from client import GithubOrgClient
+from requests import HTTPError
+from typing import Dict
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -80,38 +80,47 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-@parameterized_class(TEST_PAYLOAD)
+@parameterized_class([
+    {
+        'org_payload': TEST_PAYLOAD[0][0],
+        'repos_payload': TEST_PAYLOAD[0][1],
+        'expected_repos': TEST_PAYLOAD[0][2],
+        'apache2_repos': TEST_PAYLOAD[0][3],
+    },
+])
 class TestIntegrationGithubOrgClient(unittest.TestCase):
-    """Integration test for GithubOrgClient.public_repos"""
-
+    """Performs integration tests for the `GithubOrgClient` class."""
     @classmethod
     def setUpClass(cls) -> None:
-        """Patch requests.get and return payloads based on URL."""
+        """Sets up class fixtures before running tests."""
         route_payload = {
-            "https://api.github.com/orgs/test-org": cls.org_payload,
-            "https://api.github.com/orgs/test-org/repos": cls.repos_payload,
+            'https://api.github.com/orgs/google': cls.org_payload,
+            'https://api.github.com/orgs/google/repos': cls.repos_payload,
         }
 
-        def mock_get(url):
+        def get_payload(url):
             if url in route_payload:
-                return Mock(**{"json.return_value": route_payload[url]})
-            raise HTTPError(f"404: {url} not found")
+                return Mock(**{'json.return_value': route_payload[url]})
+            return HTTPError
 
-        cls.get_patcher = patch("requests.get", side_effect=mock_get)
+        cls.get_patcher = patch("requests.get", side_effect=get_payload)
         cls.get_patcher.start()
 
-    def test_public_repos(self):
-        """Test public_repos returns expected repo names"""
-        client = GithubOrgClient("test-org")
-        self.assertEqual(client.public_repos(), self.expected_repos)
+    def test_public_repos(self) -> None:
+        """Tests the `public_repos` method."""
+        self.assertEqual(
+            GithubOrgClient("google").public_repos(),
+            self.expected_repos,
+        )
 
-    def test_public_repos_with_license(self):
-        """Test public_repos with license filter"""
-        client = GithubOrgClient("test-org")
-        self.assertEqual(client.public_repos(license="apache-2.0"),
-                         self.apache2_repos)
+    def test_public_repos_with_license(self) -> None:
+        """Tests the `public_repos` method with a license."""
+        self.assertEqual(
+            GithubOrgClient("google").public_repos(license="apache-2.0"),
+            self.apache2_repos,
+        )
 
     @classmethod
-    def tearDownClass(cls):
-        """Stop patcher"""
+    def tearDownClass(cls) -> None:
+        """Removes the class fixtures after running all tests."""
         cls.get_patcher.stop()
