@@ -2,9 +2,11 @@
 """Unit tests for GithubOrgClient class in client.py"""
 
 import unittest
-from unittest import TestCase
+from typing import Dict
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 from parameterized import parameterized, parameterized_class
-from unittest.mock import patch, Mock, PropertyMock
+from requests import HTTPError
+
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
@@ -79,29 +81,25 @@ class TestGithubOrgClient(unittest.TestCase):
 
 
 @parameterized_class(TEST_PAYLOAD)
-class TestIntegrationGithubOrgClient(TestCase):
+
+class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration test for GithubOrgClient.public_repos"""
 
     @classmethod
-    def setUpClass(cls):
-        """Start patcher and configure mock response"""
-        cls.get_patcher = patch("requests.get")
-        mock_get = cls.get_patcher.start()
+    def setUpClass(cls) -> None:
+        """Patch requests.get and return payloads based on URL."""
+        route_payload = {
+            "https://api.github.com/orgs/google": cls.org_payload,
+            "https://api.github.com/orgs/google/repos": cls.repos_payload,
+        }
 
-        def side_effect(url):
-            mock_response = Mock()
-            if url == GithubOrgClient.ORG_URL.format(org="google"):
-                mock_response.json.return_value = cls.org_payload
-            elif url == cls.org_payload["repos_url"]:
-                mock_response.json.return_value = cls.repos_payload
-            return mock_response
+        def mock_get(url):
+            if url in route_payload:
+                return Mock(**{"json.return_value": route_payload[url]})
+            raise HTTPError(f"404: {url} not found")
 
-        mock_get.side_effect = side_effect
-
-    @classmethod
-    def tearDownClass(cls):
-        """Stop patcher"""
-        cls.get_patcher.stop()
+        cls.get_patcher = patch("requests.get", side_effect=mock_get)
+        cls.get_patcher.start()
 
     def test_public_repos(self):
         """Test public_repos returns expected repo names"""
@@ -113,3 +111,7 @@ class TestIntegrationGithubOrgClient(TestCase):
         client = GithubOrgClient("google")
         self.assertEqual(client.public_repos(license="apache-2.0"),
                          self.apache2_repos)
+    @classmethod
+    def tearDownClass(cls):
+        """Stop patcher"""
+        cls.get_patcher.stop()
