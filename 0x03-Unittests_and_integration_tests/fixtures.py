@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+# fixtures.py
+
+org_payload = {
+    "repos_url": "https://api.github.com/orgs/google/repos"
+}
+
+repos_payload = [
+    {
+        "id": 7697149,
+        "name": "episodes.dart",
+        "license": {
+            "key": "bsd-3-clause",
+            "name": "BSD 3-Clause",
+            "spdx_id": "BSD-3-Clause",
+        }
+    }
+]
+
+expected_repos = ["episodes.dart"]
+
+apache2_repos = []  # None of the repo licenses are "apache-2.0"
 
 TEST_PAYLOAD = [
   (
