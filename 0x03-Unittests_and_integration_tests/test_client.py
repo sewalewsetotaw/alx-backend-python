@@ -86,20 +86,20 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration test for GithubOrgClient.public_repos"""
 
     @classmethod
-    def setUpClass(cls) -> None:
-        """Patch requests.get and return payloads based on URL."""
-        route_payload = {
-            "https://api.github.com/orgs/google": cls.org_payload,
-            "https://api.github.com/orgs/google/repos": cls.repos_payload,
-        }
+    def setUpClass(cls):
+        """Start patcher and configure mock response"""
+        cls.get_patcher = patch("requests.get")
+        mock_get = cls.get_patcher.start()
 
-        def mock_get(url):
-            if url in route_payload:
-                return Mock(**{"json.return_value": route_payload[url]})
-            raise HTTPError(f"404: {url} not found")
+        def side_effect(url):
+            mock_response = Mock()
+            if url == GithubOrgClient.ORG_URL.format(org="google"):
+                mock_response.json.return_value = cls.org_payload
+            elif url == cls.org_payload["repos_url"]:
+                mock_response.json.return_value = cls.repos_payload
+            return mock_response
 
-        cls.get_patcher = patch("requests.get", side_effect=mock_get)
-        cls.get_patcher.start()
+        mock_get.side_effect = side_effect
 
     def test_public_repos(self):
         """Test public_repos returns expected repo names"""
