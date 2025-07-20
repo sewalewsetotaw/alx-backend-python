@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets,status
+from rest_framework import viewsets,filters,status
 from .models import User,Message,Conversation
 from .serializers import UserSerializer,MessageSerializer,ConversationSerializer
 from rest_framework.response import Response
@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset=Conversation.objects.all()
     serializer_class=ConversationSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['participants__email', 'participants__first_name']
 
     def create(self, request, *args, **kwargs):
         participant_ids = request.data.get('participants', [])
@@ -29,7 +31,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset=Message.objects.all()
     serializer_class=MessageSerializer
-
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['sent_at']
+    ordering = ['-sent_at']
+    
     def create(self, request, *args, **kwargs):
         conversation_id = request.data.get('conversation')
         message_body = request.data.get('message_body')
