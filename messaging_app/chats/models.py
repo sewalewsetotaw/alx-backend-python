@@ -1,6 +1,48 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid 
+from django.contrib.auth.base_user import BaseUserManager
+from django.utils.translation import gettext_lazy  as _
+
+
+# The CustomUserManager class is added by myself to authenticate by email instead of username
+class CustomUserManager(BaseUserManager):
+    """
+    Custom user manager where email is used instead of username
+    as the unique identifier for authentication.
+    """
+
+    def create_user(self, email, password=None, **extra_fields):
+        """
+        Creates and saves a regular user with the given email and password.
+        """
+        if not email:
+            raise ValueError(_('The Email field must be set'))
+        
+        email = self.normalize_email(email)
+        extra_fields.setdefault('is_active', True)
+
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """
+        Creates and saves a superuser with the given email and password.
+        """
+        # Set required flags for superuser
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        # Validate flags
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError(_('Superuser must have is_staff=True.'))
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError(_('Superuser must have is_superuser=True.'))
+
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     class UserRole(models.TextChoices):
@@ -17,8 +59,11 @@ class User(AbstractUser):
     role=models.CharField(max_length=15,choices=UserRole.choices,null=False)
     created_at=models.DateTimeField(auto_now_add=True)
 
+    username = None  # Disable username field
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS=['first_name','last_name']
+    #add the base CustomUserManager
+    objects = CustomUserManager()
     def __str__(self):
             return f"{self.email}"
 
