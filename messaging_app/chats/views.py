@@ -6,7 +6,9 @@ from rest_framework.exceptions import PermissionDenied
 from .models import User, Message, Conversation
 from .serializers import UserSerializer, MessageSerializer, ConversationSerializer
 from .permissions import IsParticipantOfConversation
-
+from .filters import MessageFilter
+from .pagination import StandardResultsSetPagination
+from django_filters.rest_framework import DjangoFilterBackend
 
 class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsParticipantOfConversation)
@@ -44,6 +46,9 @@ class MessageViewSet(viewsets.ModelViewSet):
     ordering_fields = ['sent_at']
     ordering = ['-sent_at']
 
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MessageFilter
+    pagination_class = StandardResultsSetPagination
     def get_queryset(self):
         return Message.objects.filter(conversation__participants=self.request.user)
 
