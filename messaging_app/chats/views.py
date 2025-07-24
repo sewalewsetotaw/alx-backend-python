@@ -7,7 +7,7 @@ from .models import User, Message, Conversation
 from .serializers import UserSerializer, MessageSerializer, ConversationSerializer
 from .permissions import IsParticipantOfConversation
 from .filters import MessageFilter
-from .pagination import StandardResultsSetPagination
+from .pagination import MessagePagination
 from django_filters.rest_framework import DjangoFilterBackend
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -48,7 +48,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MessageFilter
-    pagination_class = StandardResultsSetPagination
+    pagination_class = MessagePagination
     def get_queryset(self):
         return Message.objects.filter(conversation__participants=self.request.user)
 
