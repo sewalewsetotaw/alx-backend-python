@@ -1,8 +1,10 @@
 # chats/middleware.py
 
 from datetime import datetime
-from django.http import HttpResponseForbidden
+import time
+from django.http import HttpResponseForbidden,JsonResponse
 import logging
+from collections import defaultdict
 
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
@@ -20,13 +22,43 @@ class RequestLoggingMiddleware:
         log_message = f"{datetime.now()} - User: {user} - Path: {request.path}"
         self.logger.info(log_message)
 
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 class RestrictAccessByTimeMiddleware:
     def __init__(self,get_response):
         self.get_response=get_response
     def __call__(self, request):
         current_hour=datetime.now().hour
-        if(18<=current_hour<=21):
+        if not(18<=current_hour<=21):
             return HttpResponseForbidden("Chat access is only allowed between 6 PM and 9 PM.")
-        return self.get_response(request)
+        return self.get_response(request) 
+    
+class OffensiveLanguageMiddleware:
+        def __init__(self,get_response):
+             self.get_response=get_response
+             self.ip_message_log = defaultdict(list)
+             self.MESSAGE_LIMIT = 5
+             self.TIME_WINDOW = 60  # seconds
+        def __call__(self, request):
+         if request.method == "POST" and request.path.startswith("/api/messages/"):
+            ip = self.get_client_ip(request)
+            current_time = time.time()
+            recent_requests = [
+                t for t in self.ip_message_log[ip]
+                if current_time - t < self.TIME_WINDOW
+            ]
+            self.ip_message_log[ip] = recent_requests
+
+            if len(recent_requests) >= self.MESSAGE_LIMIT:
+                return JsonResponse(
+                    {
+                        "error": "Too many messages. Limit is 5 messages per minute."
+                    },
+                    status=429
+                )
+            self.ip_message_log[ip].append(current_time)
+         return self.get_response(request)
+        def get_client_ip(self, request):
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                return x_forwarded_for.split(',')[0].strip()
+            return request.META.get('REMOTE_ADDR')
