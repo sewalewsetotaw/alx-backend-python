@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import permissions
 from .models import User, Message, Conversation
 from .serializers import UserSerializer, MessageSerializer, ConversationSerializer
 from .permissions import IsParticipantOfConversation
@@ -10,6 +10,14 @@ from .filters import MessageFilter
 from .pagination import MessagePagination
 from django_filters.rest_framework import DjangoFilterBackend
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsParticipantOfConversation)
 
@@ -50,8 +58,12 @@ class MessageViewSet(viewsets.ModelViewSet):
     filterset_class = MessageFilter
     pagination_class = MessagePagination
     def get_queryset(self):
-        return Message.objects.filter(conversation__participants=self.request.user)
-
+        print("===> Request User:", self.request.user)
+        print("===> Request Auth:", self.request.auth)
+        qs = Message.objects.filter(conversation__participants=self.request.user)
+        print(f"User {self.request.user} can access messages: {[m.message_body for m in qs]}")
+        return qs
+    
     def create(self, request, *args, **kwargs):
         conversation_id = request.data.get('conversation')
         message_body = request.data.get('message_body')

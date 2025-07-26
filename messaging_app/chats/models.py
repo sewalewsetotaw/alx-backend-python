@@ -51,10 +51,7 @@ class User(AbstractUser):
         ADMIN = 'admin', 'Admin'
     user_id  = models.UUIDField(primary_key=True, default=uuid.uuid4,editable=False,
                             db_index=True)
-    # first_name =models.CharField(max_length=155, null=False)
-    # last_name  =models.CharField(max_length=155,null=False)
     email  =models.EmailField(unique=True,null=False)
-    # password_hash  =models.CharField(max_length=255,null=False)
     phone_number  =models.CharField(max_length=255,null=True)
     role=models.CharField(max_length=15,choices=UserRole.choices,null=False)
     created_at=models.DateTimeField(auto_now_add=True)

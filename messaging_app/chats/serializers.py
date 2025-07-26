@@ -2,11 +2,11 @@ from rest_framework import serializers
 from .models import User,Conversation,Message
 
 class UserSerializer(serializers.ModelSerializer):
-    phone_number = serializers.CharField(required=False) 
+    password = serializers.CharField(write_only=True, required=True)
     class Meta:
         model=User
-        fields=['user_id', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'created_at']
-
+        fields=['user_id', 'first_name', 'last_name', 'email', 'password','phone_number', 'role', 'created_at']
+        read_only_fields = ['user_id', 'created_at']
 class MessageSerializer(serializers.ModelSerializer):
     sender=UserSerializer(read_only=True)
     class Meta:
