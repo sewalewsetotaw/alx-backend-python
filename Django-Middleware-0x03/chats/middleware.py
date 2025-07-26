@@ -62,3 +62,18 @@ class OffensiveLanguageMiddleware:
             if x_forwarded_for:
                 return x_forwarded_for.split(',')[0].strip()
             return request.META.get('REMOTE_ADDR')
+class RolepermissionMiddleware:
+    def __init__(self,get_response):
+        self.get_response=get_response
+    def __call__(self, request):
+         if request.method == "POST" and request.path.startswith("/api/messages/"):
+            user = request.user
+            user_role = getattr(user, "role", None)
+            if user_role not in ["admin", "moderator"]:
+                return JsonResponse(
+                    {"error": "Forbidden: insufficient role permission."},
+                    status=403
+                )
+         return self.get_response(request)
+    
+
