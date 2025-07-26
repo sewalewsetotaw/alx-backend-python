@@ -17,7 +17,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsParticipantOfConversation)
 
