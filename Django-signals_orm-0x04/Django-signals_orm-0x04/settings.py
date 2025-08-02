@@ -152,3 +152,9 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',       # this is what will show in the JWT payload
     # Optionally customize lifetime, etc.
 }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}

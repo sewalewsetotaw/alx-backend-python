@@ -1,3 +1,5 @@
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from rest_framework import viewsets, filters, status
 from .models import  Message, MessageHistory,Notification
 from django.contrib.auth.models import User
@@ -10,6 +12,7 @@ from django.db.models import Prefetch
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
+@method_decorator(cache_page(60), name='dispatch')
 class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     queryset = Message.objects.all()
