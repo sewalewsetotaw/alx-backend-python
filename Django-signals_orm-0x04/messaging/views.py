@@ -17,10 +17,13 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(Q(sender=user) | Q(receiver=user))\
+        sender_messages = Message.objects.filter(sender=user)
+        received_messages = Message.objects.filter(receiver=user)
+        return (sender_messages | received_messages)\
             .select_related('sender', 'receiver')\
             .prefetch_related('replies')\
             .order_by('timestamp')
+
     
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
