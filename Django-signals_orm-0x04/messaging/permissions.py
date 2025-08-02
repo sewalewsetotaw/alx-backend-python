@@ -1,31 +1,26 @@
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
+from .models import Message, Notification, MessageHistory
+from django.contrib.auth.models import User
 
 class IsParticipantOfConversation(permissions.BasePermission):
     """
-    Allows only authenticated users who are participants in the conversation
-    to send, view, update, or delete messages.
+    Allows access if the user is either the sender or receiver of a Message,
+    or the recipient of a Notification, or the sender/receiver of the original Message in MessageHistory.
     """
 
     def has_permission(self, request, view):
-        # All users must be authenticated
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        """
-        Handles object-level permission:
-        - For Conversations: check if user is a participant
-        - For Messages: check if user is in the conversation participants
-        - For update/delete (PUT, PATCH, DELETE): enforce participant check too
-        """
+        if isinstance(obj, Message):
+            return request.user == obj.sender or request.user == obj.receiver
 
-        if request.method in SAFE_METHODS or request.method in ["PUT", "PATCH", "DELETE", "POST"]:
-            # If the object is a Conversation
-            if hasattr(obj, 'participants'):
-                return request.user in obj.participants.all()
+        elif isinstance(obj, Notification):
+            return request.user == obj.user
 
-            # If the object is a Message
-            if hasattr(obj, 'conversation'):
-                return request.user in obj.conversation.participants.all()
-
+        elif isinstance(obj, MessageHistory):
+            return request.user == obj.message.sender or request.user == obj.message.receiver
+        elif isinstance(obj, User):
+            return request.user == obj 
         return False

@@ -11,10 +11,12 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ['user', 'message', 'created_at', 'is_read']
+        ordering = ['timestamp']
 class MessageHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = MessageHistory
         fields = ['message', 'old_content', 'edited_at', 'edited_by']
+        ordering = ['-edited_at']
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
