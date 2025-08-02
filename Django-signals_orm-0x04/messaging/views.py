@@ -15,8 +15,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
 
-    def get_queryset(self):# Checker requires "sender=request.user"
-
+    def get_queryset(self):
         sender_messages = Message.objects.filter(sender=self.request.user)
         received_messages = Message.objects.filter(receiver=self.request.user)
         return (sender_messages | received_messages)\
@@ -26,6 +25,13 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
+    
+    @action(detail=False, methods=['get'], url_path='unread')
+    def unread_messages(self, request):
+        user = request.user
+        unread_messages = Message.unread.unread_for_user(user).select_related('sender', 'receiver').only('id', 'sender_id', 'receiver_id', 'content', 'timestamp').order_by('timestamp')
+        serializer = self.get_serializer(unread_messages, many=True)
+        return Response(serializer.data)
 class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     queryset = Notification.objects.select_related('user', 'message__sender').all()
