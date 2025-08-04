@@ -11,20 +11,30 @@ from django.shortcuts import redirect
 from django.db.models import Prefetch
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.shortcuts import render, redirect
+
 @method_decorator(cache_page(60), name='dispatch')
 class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-
+    
     def get_queryset(self):
-        sender_messages = Message.objects.filter(sender=self.request.user)
-        received_messages = Message.objects.filter(receiver=self.request.user)
-        return (sender_messages | received_messages)\
-            .select_related('sender', 'receiver')\
-            .prefetch_related('replies')\
-            .order_by('timestamp')
+        """
+        View to fetch messages sent by the logged-in user,
+        including related receiver, editor, parent message,
+        and prefetch replies for optimized DB queries.
+        """
+        messages_qs = Message.objects.filter(sender=request.user).select_related(
+            'receiver', 'edited_by', 'parent_message'
+        ).prefetch_related(
+            'replies'
+        ).order_by('-timestamp')
+
+        context = {
+            'messages': messages_qs
+        }
+        return render(request, 'messaging/user_messages.html', context)
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
