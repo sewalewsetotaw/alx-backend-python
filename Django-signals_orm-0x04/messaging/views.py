@@ -18,8 +18,8 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    
-    def get_queryset(self):
+
+    def get_queryset(request):
         """
         View to fetch messages sent by the logged-in user,
         including related receiver, editor, parent message,
