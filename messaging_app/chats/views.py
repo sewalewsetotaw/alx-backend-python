@@ -50,21 +50,24 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsParticipantOfConversation)
     serializer_class = MessageSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['sent_at']
-    ordering = ['-sent_at']
-
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MessageFilter
     pagination_class = MessagePagination
+    ordering_fields = ['sent_at']
+    ordering = ['-sent_at']
+
     def get_queryset(self):
-        print("===> Request User:", self.request.user)
-        print("===> Request Auth:", self.request.auth)
-        qs = Message.objects.filter(conversation__participants=self.request.user)
-        print(f"User {self.request.user} can access messages: {[m.message_body for m in qs]}")
+        user = self.request.user
+        # Return empty queryset if not authenticated (to avoid errors and unauthorized access)
+        if not user or not user.is_authenticated:
+            return Message.objects.none()
+
+        qs = Message.objects.filter(conversation__participants=user)
+        print(f"User {user} can access messages: {[m.message_body for m in qs]}")
         return qs
-    
+
     def create(self, request, *args, **kwargs):
+        # ... keep your create() logic as is ...
         conversation_id = request.data.get('conversation')
         message_body = request.data.get('message_body')
         sender = request.user  # Secure: Don't take sender from request
