@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+DEPLOYMENT_FILE="messaging_app/blue_deployment.yaml"
+SERVICE_NAME="messaging-app-service"
+NAMESPACE="default"
+
+echo "🚀 Applying Rolling Update..."
+kubectl apply -f $DEPLOYMENT_FILE
+
+echo "📡 Monitoring rollout status..."
+kubectl rollout status deployment/messaging-app-deployment --namespace=$NAMESPACE
+
+echo "🧪 Testing for downtime..."
+for i in {1..20}; do
+    curl -s http://localhost:8000/ > /dev/null && echo "✅ App is responding" || echo "❌ App might be down"
+    sleep 2
+done
+
+echo "📋 Current running pods:"
+kubectl get pods -l app=messaging-app --namespace=$NAMESPACE
