@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# -------------------------------
+# Script: kubctl-0x01
+# Purpose: Scale Django app, verify pods, load test, monitor resources
+# -------------------------------
+
+# 1️⃣ Scale Django app to 3 replicas
+echo "Scaling Django app to 3 replicas..."
+kubectl scale deployment messaging-app-deployment --replicas=3
+
+# 2️⃣ Verify multiple pods are running
+echo "Waiting a few seconds for new pods to start..."
+sleep 5
+
+echo "Listing all pods:"
+kubectl get pods
+
+# 3️⃣ Port-forward the service for load testing (runs in background)
+echo "Port-forwarding Django service to localhost:8000..."
+kubectl port-forward svc/messaging-app-service 8000:8000 >/dev/null 2>&1 &
+
+# Wait a few seconds for port-forward to establish
+sleep 5
+
+# 4️⃣ Load test using wrk
+echo "Running load test with wrk..."
+# Make sure wrk is installed
+wrk -t2 -c50 -d10s http://127.0.0.1:8000/
+
+# Kill the port-forward after test
+echo "Stopping port-forward..."
+pkill -f "kubectl port-forward svc/messaging-app-service"
+
+# 5️⃣ Monitor resource usage
+echo "Checking resource usage of pods..."
+kubectl top pods
+kubectl top nodes
+
+echo "Script completed ✅"
