@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_DIR = 'venv'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/sewalewsetotaw/alx-backend-python.git',
+                    credentialsId: 'sewalewsetotaw'
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                // Create virtual environment
+                bat 'python -m venv venv'
+                // Upgrade pip and install dependencies
+                bat 'venv\\Scripts\\pip.exe install --upgrade pip'
+                bat 'venv\\Scripts\\pip.exe install -r messaging_app\\requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                // Run pytest and generate report
+                bat 'venv\\Scripts\\pytest.exe messaging_app\\tests --junitxml=report.xml'
+            }
+        }
+
+        stage('Archive Test Report') {
+            steps {
+                junit 'report.xml'
+                archiveArtifacts artifacts: 'report.xml', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished!'
+        }
+    }
+}
