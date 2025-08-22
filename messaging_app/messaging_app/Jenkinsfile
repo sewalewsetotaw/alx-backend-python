@@ -17,17 +17,17 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 // Create virtual environment
-                bat 'python -m venv venv'
+                sh 'python3 -m venv $VENV_DIR'
                 // Upgrade pip and install dependencies
-                bat 'venv\\Scripts\\pip.exe install --upgrade pip'
-                bat 'venv\\Scripts\\pip.exe install -r messaging_app\\requirements.txt'
+                sh '. $VENV_DIR/bin/activate && pip install --upgrade pip'
+                sh '. $VENV_DIR/bin/activate && pip install -r messaging_app/requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
                 // Run pytest and generate report
-                bat 'venv\\Scripts\\pytest.exe messaging_app\\tests --junitxml=report.xml'
+                sh '. $VENV_DIR/bin/activate && pytest messaging_app/tests --junitxml=report.xml'
             }
         }
 
